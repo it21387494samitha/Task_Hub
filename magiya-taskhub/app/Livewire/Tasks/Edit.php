@@ -4,6 +4,7 @@ namespace App\Livewire\Tasks;
 
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
+use App\Enums\TaskTag;
 use App\Http\Requests\UpdateTaskRequest;
 use App\Models\Task;
 use App\Models\User;
@@ -22,6 +23,8 @@ class Edit extends Component
     public string $status = '';
     public string $assigned_to = '';
     public string $due_date = '';
+    public array $selectedTags = [];
+    public string $block_reason = '';
 
     /**
      * Mount = like useEffect([], ...) in React — runs once when component loads.
@@ -35,6 +38,8 @@ class Edit extends Component
         $this->status = $task->status->value;
         $this->assigned_to = (string) ($task->assigned_to ?? '');
         $this->due_date = $task->due_date?->format('Y-m-d') ?? '';
+        $this->selectedTags = $task->tags ?? [];
+        $this->block_reason = $task->block_reason ?? '';
     }
 
     /**
@@ -42,12 +47,13 @@ class Edit extends Component
      */
     protected function rules(): array
     {
-        return (new UpdateTaskRequest())->rules();
+        return array_merge((new UpdateTaskRequest())->rules(), [
+            'selectedTags'   => 'array',
+            'selectedTags.*' => 'string',
+            'block_reason'   => 'nullable|string|max:500',
+        ]);
     }
 
-    /**
-     * Custom validation messages — also from UpdateTaskRequest.
-     */
     protected function messages(): array
     {
         return (new UpdateTaskRequest())->messages();
@@ -57,10 +63,18 @@ class Edit extends Component
     {
         $validated = $this->validate();
 
-        // Sanitize nullable fields
         $validated['assigned_to'] = $validated['assigned_to'] ?: null;
         $validated['due_date']    = $validated['due_date'] ?: null;
         $validated['description'] = $validated['description'] ?? null;
+        $validated['tags']        = $this->selectedTags;
+        $validated['block_reason'] = $this->block_reason ?: null;
+
+        unset($validated['selectedTags']);
+
+        // Developers can only update title, description, and status.
+        if (Auth::user()->isDeveloper()) {
+            unset($validated['priority'], $validated['assigned_to'], $validated['due_date'], $validated['tags'], $validated['block_reason']);
+        }
 
         app(TaskService::class)->updateTask(Auth::user(), $this->task, $validated);
 
@@ -75,6 +89,7 @@ class Edit extends Component
             'priorities' => TaskPriority::cases(),
             'statuses'   => TaskStatus::cases(),
             'users'      => User::orderBy('name')->get(['id', 'name']),
+            'tags'       => TaskTag::cases(),
         ]);
     }
 }

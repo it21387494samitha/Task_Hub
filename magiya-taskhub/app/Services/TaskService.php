@@ -57,6 +57,13 @@ class TaskService
         // Fire event — listeners handle logging, notifications, etc.
         TaskCreated::dispatch($task, $creator);
 
+        // If the task was assigned during creation, also fire TaskAssigned
+        // so the assignee gets notified (same listener handles it).
+        if ($task->assigned_to) {
+            $assignee = $task->assignee;   // eager-loaded User
+            TaskAssigned::dispatch($task, $creator, $assignee, null);
+        }
+
         return $task;
     }
 
@@ -75,6 +82,11 @@ class TaskService
         // Developers can only change status — strip everything else
         if ($user->role === Role::DEVELOPER) {
             $data = array_intersect_key($data, ['status' => true]);
+        }
+
+        // Auto-fill timing fields based on status transitions
+        if (isset($data['status'])) {
+            $data = $this->applyTimingFields($task, $data);
         }
 
         // Capture old values BEFORE the update (for the diff)
@@ -149,6 +161,54 @@ class TaskService
                 $response->message() ?? 'This action is unauthorized.'
             );
         }
+    }
+
+    /**
+     * Apply automatic timing fields based on status transitions.
+     *
+     * - To In Progress → set started_at (if not already set)
+     * - To Done → set completed_at
+     * - To Blocked → set blocked_at
+     * - From Blocked to anything else → clear blocked_at/block_reason
+     *
+     * @param Task $task Current task (before update)
+     * @param array<string, mixed> $data Incoming update data
+     * @return array<string, mixed> Modified data with timing fields
+     */
+    private function applyTimingFields(Task $task, array $data): array
+    {
+        $newStatus = $data['status'] instanceof TaskStatus
+            ? $data['status']
+            : TaskStatus::tryFrom($data['status']);
+
+        $oldStatus = $task->status;
+
+        if ($newStatus === null || $newStatus === $oldStatus) {
+            return $data;
+        }
+
+        // Moving TO In Progress → stamp started_at (only first time)
+        if ($newStatus === TaskStatus::IN_PROGRESS && ! $task->started_at) {
+            $data['started_at'] = now();
+        }
+
+        // Moving TO Done → stamp completed_at
+        if ($newStatus === TaskStatus::DONE) {
+            $data['completed_at'] = now();
+        }
+
+        // Moving TO Blocked → stamp blocked_at
+        if ($newStatus === TaskStatus::BLOCKED) {
+            $data['blocked_at'] = now();
+        }
+
+        // Moving FROM Blocked → clear block fields
+        if ($oldStatus === TaskStatus::BLOCKED && $newStatus !== TaskStatus::BLOCKED) {
+            $data['blocked_at'] = null;
+            $data['block_reason'] = null;
+        }
+
+        return $data;
     }
 
     /**

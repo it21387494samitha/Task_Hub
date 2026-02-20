@@ -4,7 +4,9 @@ namespace App\Livewire\Tasks;
 
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
+use App\Enums\TaskTag;
 use App\Http\Requests\StoreTaskRequest;
+use App\Models\TaskTemplate;
 use App\Models\User;
 use App\Services\TaskService;
 use Illuminate\Support\Facades\Auth;
@@ -19,16 +21,18 @@ class Create extends Component
     public string $status = 'todo';
     public string $assigned_to = '';
     public string $due_date = '';
+    public array $selectedTags = [];
+    public string $templateId = '';
 
     /**
      * Validation rules — delegated to StoreTaskRequest.
-     *
-     * This is the enterprise pattern: a single source of truth for rules.
-     * If you add an API controller later, it reuses the same Request class.
      */
     protected function rules(): array
     {
-        return (new StoreTaskRequest())->rules();
+        return array_merge((new StoreTaskRequest())->rules(), [
+            'selectedTags'   => 'array',
+            'selectedTags.*' => 'string',
+        ]);
     }
 
     /**
@@ -40,16 +44,33 @@ class Create extends Component
     }
 
     /**
-     * Save the task (like handleSubmit in React).
+     * Apply a template to pre-fill form fields.
+     */
+    public function updatedTemplateId(string $value): void
+    {
+        if (!$value) return;
+
+        $template = TaskTemplate::find($value);
+        if (!$template) return;
+
+        $this->description = $template->description_template ?? '';
+        $this->priority = $template->default_priority->value;
+    }
+
+    /**
+     * Save the task.
      */
     public function save(): void
     {
         $validated = $this->validate();
 
-        // Sanitize nullable fields (mirrors prepareForValidation in the Request)
         $validated['assigned_to'] = $validated['assigned_to'] ?: null;
         $validated['due_date']    = $validated['due_date'] ?: null;
         $validated['description'] = $validated['description'] ?? null;
+        $validated['tags']        = $this->selectedTags;
+
+        // Remove fields not in the Task fillable
+        unset($validated['selectedTags']);
 
         app(TaskService::class)->createTask(Auth::user(), $validated);
 
@@ -64,6 +85,8 @@ class Create extends Component
             'priorities' => TaskPriority::cases(),
             'statuses'   => TaskStatus::cases(),
             'users'      => User::orderBy('name')->get(['id', 'name']),
+            'tags'       => TaskTag::cases(),
+            'templates'  => TaskTemplate::orderBy('name')->get(),
         ]);
     }
 }

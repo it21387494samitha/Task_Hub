@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\TaskAssigned;
+use App\Notifications\TaskAssignedNotification;
 use App\Services\ActivityService;
 use Illuminate\Support\Facades\Log;
 
@@ -45,5 +46,12 @@ class LogTaskAssigned
                 ],
             ],
         );
+
+        // Notify the NEW assignee (skip if unassigning or self-assigning)
+        if ($event->newAssignee && $event->newAssignee->id !== $event->assigner->id) {
+            $event->newAssignee->notify(
+                new TaskAssignedNotification($event->task, $event->assigner, $event->previousAssignee)
+            );
+        }
     }
 }

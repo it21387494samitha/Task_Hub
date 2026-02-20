@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\TaskUpdated;
+use App\Notifications\TaskUpdatedNotification;
 use App\Services\ActivityService;
 use Illuminate\Support\Facades\Log;
 
@@ -39,5 +40,13 @@ class LogTaskUpdated
             description: "{$event->user->name} updated task: {$event->task->title} (changed: {$fieldNames})",
             changes:     $event->changedFields,
         );
+
+        // Notify the assignee (skip if they updated their own task)
+        $assignee = $event->task->assignee;
+        if ($assignee && $assignee->id !== $event->user->id) {
+            $assignee->notify(
+                new TaskUpdatedNotification($event->task, $event->user, $event->changedFields)
+            );
+        }
     }
 }

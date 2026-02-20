@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\TaskDeleted;
+use App\Notifications\TaskDeletedNotification;
 use App\Services\ActivityService;
 use Illuminate\Support\Facades\Log;
 
@@ -34,5 +35,13 @@ class LogTaskDeleted
             subject:     $event->task,
             description: "{$event->deletedBy->name} deleted task: {$event->task->title}",
         );
+
+        // Notify the assignee that their task was deleted
+        $assignee = $event->task->assignee;
+        if ($assignee && $assignee->id !== $event->deletedBy->id) {
+            $assignee->notify(
+                new TaskDeletedNotification($event->task, $event->deletedBy)
+            );
+        }
     }
 }
