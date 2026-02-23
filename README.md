@@ -45,7 +45,6 @@
   </tr>
 </table>
 
-> 💡 Replace placeholder images with real screenshots once the app is running.
 </div>
 
 ---
