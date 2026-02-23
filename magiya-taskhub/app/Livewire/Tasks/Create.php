@@ -6,21 +6,35 @@ use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Enums\TaskTag;
 use App\Http\Requests\StoreTaskRequest;
+use App\Models\Task;
 use App\Models\TaskTemplate;
 use App\Models\User;
 use App\Services\TaskService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 
 class Create extends Component
 {
+    /**
+     * Redirect unauthorized users before they even see the form.
+     */
+    public function mount(): void
+    {
+        if (Gate::denies('create', Task::class)) {
+            session()->flash('error', 'You do not have permission to create tasks.');
+            $this->redirect(route('tasks.index'));
+        }
+    }
+
     // ─── Form fields (like useState in React) ────────────
     public string $title = '';
     public string $description = '';
     public string $priority = 'medium';
     public string $status = 'todo';
-    public string $assigned_to = '';
-    public string $due_date = '';
+    public ?string $assigned_to = null;
+    public ?string $due_date = null;
     public array $selectedTags = [];
     public string $templateId = '';
 
@@ -72,7 +86,13 @@ class Create extends Component
         // Remove fields not in the Task fillable
         unset($validated['selectedTags']);
 
-        app(TaskService::class)->createTask(Auth::user(), $validated);
+        try {
+            app(TaskService::class)->createTask(Auth::user(), $validated);
+        } catch (AuthorizationException $e) {
+            session()->flash('error', 'You do not have permission to create tasks.');
+            $this->redirect(route('tasks.index'));
+            return;
+        }
 
         session()->flash('success', "Task '{$validated['title']}' created successfully.");
 

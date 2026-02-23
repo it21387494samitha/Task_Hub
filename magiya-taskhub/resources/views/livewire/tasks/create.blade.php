@@ -126,6 +126,13 @@
                     </div>
                 </div>
 
+                {{-- Server / Auth Error Banner --}}
+                @if (session()->has('error'))
+                    <div class="rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-3 text-sm text-red-400">
+                        <strong>Error:</strong> {{ session('error') }}
+                    </div>
+                @endif
+
                 {{-- Buttons --}}
                 <div class="flex items-center justify-end space-x-3 pt-6 border-t border-white/[0.06]">
                     <a href="{{ route('tasks.index') }}"

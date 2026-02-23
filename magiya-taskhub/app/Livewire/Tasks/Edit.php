@@ -21,8 +21,8 @@ class Edit extends Component
     public string $description = '';
     public string $priority = '';
     public string $status = '';
-    public string $assigned_to = '';
-    public string $due_date = '';
+    public ?string $assigned_to = null;
+    public ?string $due_date = null;
     public array $selectedTags = [];
     public string $block_reason = '';
 
@@ -36,8 +36,8 @@ class Edit extends Component
         $this->description = $task->description ?? '';
         $this->priority = $task->priority->value;
         $this->status = $task->status->value;
-        $this->assigned_to = (string) ($task->assigned_to ?? '');
-        $this->due_date = $task->due_date?->format('Y-m-d') ?? '';
+        $this->assigned_to = $task->assigned_to ? (string) $task->assigned_to : null;
+        $this->due_date = $task->due_date?->format('Y-m-d');
         $this->selectedTags = $task->tags ?? [];
         $this->block_reason = $task->block_reason ?? '';
     }

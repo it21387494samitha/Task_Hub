@@ -85,5 +85,63 @@
                 </div>
             </template>
         </div>
+
+        {{-- ── DEBUG: Livewire & Fetch Error Logger ────────────── --}}
+        <script>
+            // 1. Intercept ALL fetch requests — log every failed HTTP response
+            const _origFetch = window.fetch;
+            window.fetch = async function(...args) {
+                const response = await _origFetch.apply(this, args);
+                if (!response.ok) {
+                    const clone = response.clone();
+                    clone.text().then(body => {
+                        console.error(
+                            '%c[TASKHUB FETCH ERROR]', 'color:red;font-weight:bold',
+                            '\nURL    :', args[0],
+                            '\nStatus :', response.status, response.statusText,
+                            '\nBody   :', body
+                        );
+                    });
+                }
+                return response;
+            };
+
+            // 2. Livewire v4 commit hook — catches server-side failures (500, 422, 403 etc.)
+            document.addEventListener('livewire:init', () => {
+                Livewire.hook('commit', ({ component, commit, respond, succeed, fail }) => {
+                    fail(({ status, preventDefault }) => {
+                        console.error(
+                            '%c[LIVEWIRE COMMIT FAILED]', 'color:red;font-weight:bold',
+                            '\nComponent:', component.name,
+                            '\nHTTP Status:', status
+                        );
+                        // Show a visible toast so you can see it in the UI too
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Server error (HTTP ' + status + ') — check console for details.', type: 'error' }
+                        }));
+                    });
+                });
+
+                // 3. Log every Livewire request+response for full visibility
+                Livewire.hook('commit', ({ component, commit, respond, succeed, fail }) => {
+                    succeed(({ snapshot, effect }) => {
+                        if (effect && effect.dispatches && effect.dispatches.length) {
+                            console.log(
+                                '%c[LIVEWIRE OK]', 'color:green;font-weight:bold',
+                                component.name, '→ dispatched:', effect.dispatches
+                            );
+                        }
+                    });
+                });
+            });
+
+            // 4. Catch any unhandled JS errors or promise rejections
+            window.addEventListener('unhandledrejection', e => {
+                console.error('%c[UNHANDLED PROMISE]', 'color:orange;font-weight:bold', e.reason);
+            });
+            window.onerror = (msg, src, line, col, err) => {
+                console.error('%c[JS ERROR]', 'color:red;font-weight:bold', msg, '\nat', src + ':' + line);
+            };
+        </script>
     </body>
 </html>

@@ -37,6 +37,9 @@
     @if (session()->has('success'))
         <div x-init="$dispatch('toast', { message: '{{ session('success') }}', type: 'success' })" class="hidden"></div>
     @endif
+    @if (session()->has('error'))
+        <div x-init="$dispatch('toast', { message: '{{ session('error') }}', type: 'error' })" class="hidden"></div>
+    @endif
     @if ($successMessage)
         <div x-init="$dispatch('toast', { message: '{{ $successMessage }}', type: 'success' })" class="hidden"></div>
     @endif
