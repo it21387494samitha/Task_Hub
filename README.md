@@ -28,20 +28,20 @@
 <div align="center">
 <table>
   <tr>
-    <td align="center"><b>Dashboard</b></td>
+    <td align="center"><b>Admin Panel</b></td>
     <td align="center"><b>Kanban Board</b></td>
   </tr>
   <tr>
-    <td><img src="https://raw.githubusercontent.com/it21387494samitha/Task_Hub/refs/heads/main/magiya-taskhub/public/screenshots/analytics.png" alt="Dashboard" width="480"/></td>
-    <td><img src="https://placehold.co/480x280?text=Kanban+Board+View" alt="Kanban Board" width="480"/></td>
+    <td><img src="https://github.com/it21387494samitha/Task_Hub/blob/main/magiya-taskhub/public/screenshots/dashboard.png?raw=true" alt="Dashboard" width="480"/></td>
+    <td><img src="https://github.com/it21387494samitha/Task_Hub/blob/main/magiya-taskhub/public/screenshots/kanban.png?raw=true" alt="Kanban Board" width="480"/></td>
   </tr>
   <tr>
     <td align="center"><b>Task Detail</b></td>
-    <td align="center"><b>Admin Panel</b></td>
+    <td align="center"><b>Landing page</b></td>
   </tr>
   <tr>
-    <td><img src="https://placehold.co/480x280?text=Task+Detail+View" alt="Task Detail" width="480"/></td>
-    <td><img src="https://placehold.co/480x280?text=Admin+Panel+View" alt="Admin Panel" width="480"/></td>
+    <td><img src="https://raw.githubusercontent.com/it21387494samitha/Task_Hub/refs/heads/main/magiya-taskhub/public/screenshots/analytics.png" alt="analysis page" width="480"/></td>
+    <td><img src="https://github.com/it21387494samitha/Task_Hub/blob/main/magiya-taskhub/public/screenshots/landing.png?raw=true" alt="" width="480"/></td>
   </tr>
 </table>
 
