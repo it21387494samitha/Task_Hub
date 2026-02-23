@@ -32,7 +32,7 @@
     <td align="center"><b>Kanban Board</b></td>
   </tr>
   <tr>
-    <td><img src="https://placehold.co/480x280?text=Dashboard+View" alt="Dashboard" width="480"/></td>
+    <td><img src="[https://placehold.co/480x280?text=Dashboard+View](https://github.com/it21387494samitha/Task_Hub/blob/main/magiya-taskhub/public/screenshots/analytics.png?raw=true)" alt="Dashboard" width="480"/></td>
     <td><img src="https://placehold.co/480x280?text=Kanban+Board+View" alt="Kanban Board" width="480"/></td>
   </tr>
   <tr>
